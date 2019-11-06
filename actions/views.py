@@ -4,6 +4,7 @@ from django.conf import settings
 import json
 from django.http import HttpResponse, JsonResponse
 import slack
+from .models import get_app_home_block
 
 @csrf_exempt
 def event_hook(request):
@@ -29,5 +30,13 @@ def event_hook(request):
             channel = event_msg['channel']
             response_msg = ":wave:, Hello <@%s>" % user
             client.chat_postMessage(channel=channel, text=response_msg)
+            return HttpResponse(status=200)
+
+        if (event_msg['type'] == 'app_home_opened') and ('tab' in event_msg) and (event_msg['tab'] == 'home'):
+            user = event_msg['user']
+            channel = event_msg['channel']
+            blocks = get_app_home_block()
+            views = {"type": "home", "blocks": blocks}
+            client.views_publish(user_id=user, view=views)
             return HttpResponse(status=200)
     return HttpResponse(status=200)
